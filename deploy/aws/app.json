@@ -1,0 +1,443 @@
+{ "AWSTemplateFormatVersion":"2010-09-09"
+, "Description":"Creates a group of AutoScaling instances to run App."
+
+, "Parameters":
+  { "SSHKeyName":
+    { "Description":"The SSH keyname that you might use to access the bastion box, if you need to"
+    , "Type":"String"
+    }
+  , "MyVpcId":
+    { "Description":"The VPC ID that you're deploying into"
+    , "Type":"String"
+    , "MinLength":"12"
+    , "MaxLength":"12"
+    , "AllowedPattern":"vpc-[a-f0-9]{8}"
+    , "ConstraintDescription":"Must be a valid VPC ID"
+    }
+  , "AMI":
+    { "Description":"The desired valid AMI to use"
+    , "Type":"String"
+    , "MinLength":"12"
+    , "MaxLength":"12"
+    , "AllowedPattern":"ami-[a-f0-9]{8}"
+    }
+  , "BuildNumber":
+    { "Description":"The build to deploy"
+    , "Type":"Number"
+    }
+  , "HealthCheckDelay":
+    { "Description": "Grace period before ELB does health checking"
+    , "Type": "Number"
+    , "Default": 600
+    }
+  , "AppServerInstanceType":
+    { "Description":"EC2 Instance Type used for App"
+    , "Type":"String"
+    , "Default":"t2.medium"
+    }
+  , "MinScalingSize":
+    { "Description":"The min scaling size"
+    , "Type":"String"
+    , "Default":"0"
+    }
+  , "MaxScalingSize":
+    { "Description":"The max scaling size"
+    , "Type":"String"
+    , "Default":"1"
+    }
+  , "AppName":
+    { "Description":"The name of this application"
+    , "Type":"String"
+    , "MinLength":"1"
+    , "MaxLength":"64"
+    , "AllowedPattern":"[a-zA-Z][a-zA-Z0-9]*"
+    , "ConstraintDescription":"must begin with a letter and contain only alphanumeric characters."
+    }
+  , "CacheConnectionsFrom":
+    { "Description": "The security group we allow connections to the cache from"
+    , "Type": "String"
+    , "MinLength": "11"
+    , "MaxLength": "11"
+    , "AllowedPattern": "sg-[a-f0-9]{8}"
+    , "ConstraintDescription": "Must be a valid Security Group ID"
+    }
+  , "ZoneName":
+    { "Description": "The zone to create the human name in"
+    , "Type": "String"
+    , "MinLength": "1"
+    , "MaxLength": "32"
+    }
+  , "HostName":
+    { "Description": "The human readable name"
+    , "Type": "String"
+    , "Default": "dashing"
+    , "MinLength": "1"
+    , "MaxLength": "32"
+    }
+  , "ArtifactLocation":
+    { "Description": "Where the artifact locate?"
+    , "Type": "String"
+    }
+  , "DeploymentSNSTopicName":
+    { "Description": "The deployment SNS topic name"
+    , "Type": "String"
+    }
+  , "DeploymentSQSTopicName":
+    { "Description": "The deployment SQS queue name"
+    , "Type": "String"
+    }
+  , "DeploymentSNSRegion":
+    { "Description": "The deployment SNS Region"
+    , "Type": "String"
+    , "Default": "ap-southeast-2"
+    }
+  , "AppServerInstanceProfile":
+    { "Description": "The instance profile to give to the instance"
+    , "Type": "String"
+    , "Default": "dashing-instance-role"
+    }
+  }
+
+, "Mappings":
+  { "VpcId2AZs":
+    { "vpc-b1ab5ed9": { "AZs": [ "ap-southeast-2a", "ap-southeast-2b" ] } }
+  , "VpcId2Subnets":
+    { "vpc-b1ab5ed9":
+      { "private":   [ "subnet-4faa5f27", "subnet-4caa5f24" ]
+      , "services":  [ "subnet-f911058d", "subnet-184ba27d" ]
+      }
+    }
+  }
+
+, "Resources":
+  { "AppServerELB":
+    { "Type":"AWS::ElasticLoadBalancing::LoadBalancer"
+    , "Properties":
+      { "Subnets": { "Fn::FindInMap": [ "VpcId2Subnets", { "Ref":"MyVpcId" }, "services" ] }
+      , "Listeners":
+        [ { "LoadBalancerPort":"80", "InstancePort":80
+          , "Protocol":"HTTP"
+          }
+        ]
+      , "HealthCheck":
+        { "Target":"HTTP:80/diagnostic/status/heartbeat"
+        , "HealthyThreshold":"2"
+        , "UnhealthyThreshold":"3"
+        , "Interval":"60"
+        , "Timeout":"10"
+        }
+      , "SecurityGroups": [ { "Ref":"InternalELBSecurityGroup" } ]
+      , "Scheme": "internal"
+      , "CrossZone": "true"
+      }
+    }
+  , "InternalELBSecurityGroup":
+    { "Type":"AWS::EC2::SecurityGroup"
+    , "Properties":
+      { "GroupDescription":"Permit the ELB to be accessible to the office network only"
+      , "SecurityGroupIngress":
+        [ { "IpProtocol":"tcp"
+          , "FromPort":"80"
+          , "ToPort":"80"
+          , "CidrIp":"<officeip>"
+          }
+        , { "IpProtocol":"tcp"
+          , "FromPort":"443"
+          , "ToPort":"443"
+          , "CidrIp":"<officeip>"
+          }
+        , { "IpProtocol":"icmp"
+          , "FromPort":"-1"
+          , "ToPort":"-1"
+          , "CidrIp":"<officeip>"
+          }
+        ]
+      , "SecurityGroupEgress":
+        [ { "IpProtocol":"-1"
+          , "FromPort":"0"
+          , "ToPort":"65535"
+          , "CidrIp":"0.0.0.0/0"
+          }
+        ]
+      , "VpcId": { "Ref":"MyVpcId" }
+      }
+    }
+  , "AppServerAutoScalingGroup":
+    { "Type":"AWS::AutoScaling::AutoScalingGroup"
+    , "Properties":
+      { "AvailabilityZones": { "Fn::FindInMap": [ "VpcId2AZs", { "Ref":"MyVpcId" }, "AZs" ] }
+      , "HealthCheckType": "ELB"
+      , "HealthCheckGracePeriod": { "Ref": "HealthCheckDelay" }
+      , "LaunchConfigurationName": { "Ref": "AppServerLaunchConfiguration" }
+      , "LoadBalancerNames": [ { "Ref":"AppServerELB" } ]
+      , "MinSize": { "Ref" : "MinScalingSize" }
+      , "MaxSize": { "Ref" : "MaxScalingSize" }
+      , "VPCZoneIdentifier":
+        { "Fn::FindInMap": [ "VpcId2Subnets", { "Ref":"MyVpcId" }, "private" ]
+        }
+      , "Tags":
+        [ { "Key":"CloudFormationStack"
+          , "Value": { "Ref":"AWS::StackName" }
+          , "PropagateAtLaunch":true
+          }
+        , { "Key":"CloudFormationStackId"
+          , "Value": { "Ref":"AWS::StackId" }
+          , "PropagateAtLaunch":true
+          }
+        , { "Key":"Name"
+          , "Value":
+            { "Fn::Join": [ "-", [ {"Ref": "AppName"}, {"Ref": "AWS::StackName"} ] ]
+            }
+          , "PropagateAtLaunch":true
+          }
+        ]
+      }
+    , "UpdatePolicy":
+      { "AutoScalingRollingUpdate":
+        { "MinInstancesInService": { "Ref" : "MinScalingSize" }
+        , "MaxBatchSize": "2"
+        , "PauseTime": "PT15M"
+        , "SuspendProcesses": ["ScheduledActions"]
+        }
+      , "AutoScalingScheduledAction" : { "IgnoreUnmodifiedGroupSizeProperties" : true }
+      }
+    }
+  , "AppServerLaunchConfiguration":
+    { "Metadata":
+      { "AWS::CloudFormation::Init":
+        { "configSets": { "default": [ "createMarker", "markBeginning", "setupCfnInit", "ansible", "markEnd" ] }
+        , "createMarker":
+          { "files":
+            { "/usr/local/bin/mark_deployment.sh":
+              { "content":
+                { "Fn::Join":
+                  [ ""
+                  , [ "#! /bin/bash \n"
+                    , "echo \"$1: $(uptime)-$2\" >> /var/log/uptime_after_ansible.log \n"
+                    ]
+                  ]
+                }
+              , "mode": "000700"
+              , "owner": "root"
+              , "group": "root"
+              }
+            }
+          }
+        , "markBeginning":
+          { "commands":
+            { "01-mark-start": { "command": [ "/usr/local/bin/mark_deployment.sh", "start", { "Ref": "BuildNumber" } ] }
+            }
+          }
+        , "setupCfnInit":
+          { "files":
+            { "/usr/local/bin/setup_artifacts":
+              { "content":
+                { "Fn::Join":
+                  [ ""
+                  , [ "#!/bin/bash\n"
+                    , "yum -y install lzma\n"
+                    , "rm -rf /var/tmp*\n"
+                    , "aws s3 cp ", {"Ref": "ArtifactLocation"}, " /var/tmp/artifacts.tar.lzma\n"
+                    , "tar xf /var/tmp/artifacts.tar.lzma -C /var/tmp\n"
+                    ]
+                  ]
+                }
+              , "mode": "000755"
+              , "owner": "root"
+              , "group": "root"
+              }
+            }
+          , "commands":
+            { "10-update-aws-cli": { "command": [ "yum", "-y",  "update", "aws-cli" ] }
+            , "20-get-the-artifacts": { "command": [ "/usr/local/bin/setup_artifacts" ] }
+            }
+          }
+        , "ansible":
+          { "commands":
+            { "01-install-pip": { "command": [ "yum", "-y", "install", "python-pip" ] }
+            , "02-install-ansible": { "command": [ "pip", "install", "ansible" ] }
+            , "03-run-ansible":
+              { "command": [ "/usr/local/bin/ansible-playbook", "-i", "inventory.ini", "playbook.yml" ]
+              , "cwd": "/var/tmp/artifacts/ansible"
+              }
+            }
+          }
+        , "markEnd":
+          { "commands":
+            { "01-mark-end": { "command": [ "/usr/local/bin/mark_deployment.sh", "end", { "Ref": "BuildNumber" } ] }
+            }
+          }
+        }
+      }
+    , "Type":"AWS::AutoScaling::LaunchConfiguration"
+    , "Properties":
+      { "ImageId": { "Ref":"AMI" }
+      , "InstanceType": { "Ref":"AppServerInstanceType" }
+      , "IamInstanceProfile" : { "Ref": "AppServerInstanceProfile" }
+      , "UserData":
+        { "Fn::Base64":
+          { "Fn::Join":
+            [ ""
+            , [ "#!/bin/bash\n"
+              , "yum update -y aws-cfn-bootstrap\n"
+
+              , "instance_id=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)\n"
+
+              , "echo \"127.0.0.1    $( hostname )    $( hostname ).", { "Ref":"ZoneName" }, "\" >> /etc/hosts", "\n"
+
+              , "rm -f /etc/localtime; ln -s /usr/share/zoneinfo/Australia/Melbourne /etc/localtime", "\n"
+
+              , "# Initial cfn-init run\n"
+              , "/opt/aws/bin/cfn-init --resource AppServerLaunchConfiguration --stack ", { "Ref":"AWS::StackName" }, " --region ", { "Ref":"AWS::Region" }, "\n"
+              , "ret=$?\n"
+
+              , "if (($ret == 0)); then\n"
+              , "  START=$(date +%s)\n"
+              , "  while true; do\n"
+              , "    echo \"Trying to curl /diagnostic/status/nagios - $(date)\"\n"
+              , "    curl -f -s http://localhost:7546/diagnostic/status/nagios\n"
+              , "    if (( $? == 0 )); then\n"
+              , "      break\n"
+              , "    fi\n"
+              , "    sleep 2\n"
+              , "    if (( $(date +%s) - $START > 300 )); then\n"
+              , "      break\n"
+              , "    fi\n"
+              , "  done\n"
+              , "fi\n"
+
+              , "curl -f -s http://localhost:7546/diagnostic/status/nagios\n"
+
+              , "if (($?==0)) && (($ret==0)); then\n"
+
+              , "  ##################\n"
+              , "  ## ON SUCCESS\n"
+              , "  ##################\n"
+
+              , "  version=$(curl -s http://localhost:7546/diagnostic/version)\n"
+              , "  /opt/aws/bin/cfn-signal  --resource AppServerAutoScalingGroup --region ", { "Ref": "AWS::Region" }, " --stack ", { "Ref": "AWS::StackName" }, "\n"
+
+              , "  aws sns publish --topic-arn ", { "Ref": "DeploymentSNSTopic" }, " --region ", { "Ref":"DeploymentSNSRegion" }
+              , "    --subject 'DeploymentSuccess' --message \"success:${instance_id}:$version\" > /var/log/sns_notification.log \n"
+              , "else\n"
+
+              , "  ##################\n"
+              , "  ## ON FAILURE\n"
+              , "  ##################\n"
+
+              , "  /opt/aws/bin/cfn-signal -s false  --resource AppServerAutoScalingGroup --region ", { "Ref": "AWS::Region" }, " --stack ", { "Ref": "AWS::StackName" }, "\n"
+
+              , "  aws sns publish --topic-arn ", { "Ref": "DeploymentSNSTopic" }, " --region ", { "Ref":"DeploymentSNSRegion" }
+              , "    --subject 'DeploymentFailed' --message \"fail:${instance_id}:$(cat /var/log/cfn-init.log)\" > /var/log/sns_notification.log\n"
+              , "fi\n"
+
+              , "echo ", {"Ref": "BuildNumber"}, " > /etc/build_number\n"
+              ]
+            ]
+          }
+        }
+      , "KeyName" : { "Ref" : "SSHKeyName" }
+      , "SecurityGroups":
+        [ { "Ref":"AppServerSecurityGroup" }
+        , { "Ref":"AppServerSSHSecurityGroup" }
+        , { "Ref": "CacheConnectionsFrom" }
+        ]
+      }
+    }
+  , "AppServerSecurityGroup":
+    { "Type":"AWS::EC2::SecurityGroup"
+    , "Properties":
+      { "GroupDescription":"Permit inbound HTTP from the ELB and ICMP from inside the VPC"
+      , "SecurityGroupIngress":
+        [ { "IpProtocol":"tcp"
+          , "FromPort":"80"
+          , "ToPort":"80"
+          , "SourceSecurityGroupId": { "Ref":"InternalELBSecurityGroup" }
+          }
+        , { "IpProtocol":"icmp"
+          , "FromPort":"-1"
+          , "ToPort":"-1"
+          , "CidrIp":"172.16.0.0/16"
+          }
+        ]
+      , "VpcId": { "Ref":"MyVpcId" }
+      }
+    }
+  , "AppServerSSHSecurityGroup":
+    { "Type": "AWS::EC2::SecurityGroup"
+    , "Properties":
+      { "GroupDescription": "Permit inbound ssh from the office"
+      , "SecurityGroupIngress":
+        [ { "IpProtocol": "tcp"
+          , "FromPort": "22"
+          , "ToPort": "22"
+          , "CidrIp": "10.0.0.0/8"
+          }
+        ]
+      , "VpcId": { "Ref":"MyVpcId" }
+      }
+    }
+  , "DeploymentSQSQueue":
+    { "Type":"AWS::SQS::Queue"
+    , "Properties":
+      { "QueueName": { "Ref": "DeploymentSQSTopicName" }
+      }
+    }
+  , "DeploymentSQSQueuePolicy":
+    { "Type": "AWS::SQS::QueuePolicy"
+    , "Properties":
+      { "PolicyDocument":
+        { "Id": "AllowDeploymentSNSTopicToPublishPolicy"
+        , "Statement":
+          [ { "Sid": "Allow-User-SendMessage"
+            , "Effect": "Allow"
+            , "Principal": { "AWS" : "*" }
+            , "Action": "sqs:*"
+            , "Resource": { "Fn::GetAtt" : [ "DeploymentSQSQueue", "Arn" ] }
+            }
+          ]
+        }
+      , "Queues": [ { "Ref": "DeploymentSQSQueue" } ]
+      }
+    }
+  , "DeploymentSNSTopic":
+    { "Type" : "AWS::SNS::Topic"
+    ,  "Properties" :
+      { "TopicName" : { "Ref":"DeploymentSNSTopicName" }
+      , "Subscription" :
+        [ { "Endpoint" : { "Fn::GetAtt" : ["DeploymentSQSQueue", "Arn"]}
+          , "Protocol" : "sqs"
+        } ]
+      }
+    }
+  , "CnameOfApp":
+    { "Type": "AWS::Route53::RecordSet"
+    , "Properties":
+      { "Comment": "Public CNAME"
+      , "HostedZoneName": { "Ref": "ZoneName" }
+      , "Name": { "Fn::Join":[ "", [ { "Ref": "HostName" }, ".", { "Ref": "ZoneName" } ] ] }
+      , "Type": "CNAME"
+      , "TTL": "600"
+      , "ResourceRecords": [ { "Fn::GetAtt": [ "AppServerELB", "DNSName" ] } ]
+      }
+    }
+  , "CnameOfPythonDashing":
+    { "Type": "AWS::Route53::RecordSet"
+    , "Properties":
+      { "Comment": "Public CNAME"
+      , "HostedZoneName": { "Ref": "ZoneName" }
+      , "Name": { "Fn::Join":[ "", [ "python-dashing", ".", { "Ref": "ZoneName" } ] ] }
+      , "Type": "CNAME"
+      , "TTL": "600"
+      , "ResourceRecords": [ { "Fn::GetAtt": [ "AppServerELB", "DNSName" ] } ]
+      }
+    }
+  }
+
+, "Outputs":
+  { "PublicEndpoint":
+    { "Description" : "The public endpoint of the dashboard"
+    , "Value" : { "Fn::Join" : [ "", [ "https://", { "Ref" : "HostName" }, ".", { "Ref" : "ZoneName" }, "/" ] ] }
+    }
+  }
+}

@@ -1,0 +1,126 @@
+---
+
+bespin_version: "0.5.6.4.3"
+
+bespin:
+  assume_role: role/bamboo/dashing-deployer
+
+tags:
+  lob: Commercial
+  application: Dashing
+
+vars:
+  app_name: dashing
+  sleep_time: 15
+  environment: "{environment}"
+  auto_scaling_group_name: "AppServerAutoScalingGroup"
+
+environments:
+  devprod:
+    account_id: "<account_id>"
+    vars:
+      vpc_id: <vpc_id>
+      zone_name: <zone>
+      artifact_bucket: <s3 bucket to store artifact in>
+      services_subnets: <csv subnets to put instance in>
+
+ssh:
+  user: ec2-user
+  auto_scaling_group_name: "{vars.auto_scaling_group_name}"
+
+stacks:
+  app:
+    stack_name: dashing
+    auto_scaling_group_name: "{vars.auto_scaling_group_name}"
+
+    vars:
+      version: "{vars.app_name}-{{BUILD_NUMBER}}-{{GIT_COMMIT}}"
+      artifact_location: "{__stack__.artifacts.main.upload_to}"
+      cache_connections_from: ["{stacks.db_connection_sg}", "DashingRedisInboundConnectionsSG"]
+
+    build_env:
+      - GIT_COMMIT
+      - BUILD_NUMBER
+
+    env:
+      - BUILD_NUMBER
+
+    build_after:
+      - redis
+
+    artifacts:
+      main:
+        location_var_name: artifact_location
+        compression_type: xz
+
+        history_length: 3
+
+        upload_to: "s3://{vars.artifact_bucket}/{vars.app_name}/artifacts-{{BUILD_NUMBER}}.tar.lzma"
+
+        paths:
+          - "{config_root}/../files/ansible:/artifacts/ansible"
+          - "{config_root}/../../python_dashing:/artifacts/python_dashing"
+
+        files:
+          - content: "{__stack__.vars.version}"
+            path: /artifacts/python_dashing/python-dashing/python_dashing/server/static/version
+
+        commands:
+          - copy:
+              - ["{config_root}/../../python_dashing", "/"]
+            command:
+              - ./run.sh
+            add_into_tar:
+              - [".python-dashing/lib/python3.4/site-packages/", "/artifacts/python_dashing/site-packages"]
+
+    confirm_deployment:
+      auto_scaling_group_name: "{vars.auto_scaling_group_name}"
+      sns_confirmation:
+        timeout: 1000
+        version_message: "dashing-{{BUILD_NUMBER}}-*"
+        straight_after: false
+        deployment_queue: "dashing-deployment"
+
+    params_yaml:
+      AMI: ami-fd9cecc7
+      MinScalingSize: 0
+      MaxScalingSize: 1
+      DeploymentSNSTopicName: dashing-deployment
+      DeploymentSQSTopicName: dashing-deployment
+
+      MyVpcId: XXX_VPC_ID_XXX
+      AppName: XXX_APP_NAME_XXX
+      ZoneName: XXX_ZONE_NAME_XXX
+      SSHKeyName: XXX_APP_NAME_XXX
+      BuildNumber: XXX_BUILD_NUMBER_XXX
+      ArtifactLocation: XXX_ARTIFACT_LOCATION_XXX
+      CacheConnectionsFrom: XXX_CACHE_CONNECTIONS_FROM_XXX
+
+  ########################
+  ###   DB CONNECTIONS
+  ########################
+
+  db_connection_sg:
+    stack_name: dashing-shared-sg
+
+    params_yaml:
+      VpcId: XXX_VPC_ID_XXX
+
+  ########################
+  ###   REDIS
+  ########################
+
+  redis:
+    stack_name: dashing-redis
+
+    vars:
+      cache_connections_from: ["{stacks.db_connection_sg}", "DashingRedisInboundConnectionsSG"]
+
+    params_yaml:
+      ClusterName: dashing-redis
+
+      VpcId: XXX_VPC_ID_XXX
+      ZoneName: XXX_ZONE_NAME_XXX
+      ServicesSubnets: XXX_SERVICES_SUBNETS_XXX
+      CacheConnectionsFrom: XXX_CACHE_CONNECTIONS_FROM_XXX
+

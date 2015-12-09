@@ -1,0 +1,28 @@
+{ "AWSTemplateFormatVersion": "2010-09-09"
+, "Description": "Security Group Stack"
+
+, "Parameters":
+  { "VpcId":
+    { "Description": "The VPC ID that you're deploying into"
+    , "Type": "String"
+    , "MinLength": "12"
+    , "MaxLength": "12"
+    , "AllowedPattern": "vpc-[a-f0-9]{8}"
+    , "ConstraintDescription": "Must be a valid VPC ID"
+    }
+  }
+
+, "Resources":
+  { "DashingRedisInboundConnectionsSG":
+    { "Type": "AWS::EC2::SecurityGroup"
+    , "Properties":
+      { "GroupDescription": "Inbound security group for the dashing redis instance"
+      , "VpcId": { "Ref": "VpcId" }
+      }
+    }
+  }
+
+, "Outputs":
+  { "DashingRedisInboundConnectionsSG": { "Value": { "Ref": "DashingRedisInboundConnectionsSG" } }
+  }
+}

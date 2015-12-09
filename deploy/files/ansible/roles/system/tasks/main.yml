@@ -1,0 +1,4 @@
+---
+
+- name: Don't require TTY for Sudo
+  lineinfile: regexp="Defaults\s+requiretty" state=absent dest=/etc/sudoers

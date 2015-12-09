@@ -1,0 +1,7 @@
+---
+
+accounts:
+  dev: <account_id>
+  stg: <account_id>
+  prod: <account_id>
+  devprod: <account_id>

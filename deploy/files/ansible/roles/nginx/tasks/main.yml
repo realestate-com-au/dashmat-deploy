@@ -1,0 +1,15 @@
+---
+- name: Install nginx
+  yum: name=nginx state=installed
+
+- name: Enable and start nginx service
+  service: name=nginx enabled=yes state=started
+
+- name: Replace main nginx configuration file
+  copy: src=nginx.conf dest=/etc/nginx/nginx.conf
+  notify: ReloadNginx
+
+- name: Add app specific nginx configuration file
+  template: src=app.conf dest=/etc/nginx/conf.d/app.conf
+  notify: ReloadNginx
+

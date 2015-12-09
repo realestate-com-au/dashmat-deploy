@@ -1,0 +1,40 @@
+div.row
+  div.col-md-6
+    for comment in nice_comments
+      div.panel
+        p= comment
+
+  div.col-md-4
+      div.panel.panel-primary
+          div.panel-heading
+            h3.panel-title
+              = "All Versions - "
+              = label
+                  span.pull-right#traffic-error
+            h4
+              = total_num_ratings
+              = " Ratings and "
+              = total_num_reviews
+              = " Reviews"
+          div.panel-body
+            table.table
+              tr
+                th #stars
+                th Count
+              for stars, count in rating_list
+                tr
+                  td= stars
+                  td= count
+
+  div.col-md-4
+    div.panel.panel-primary
+      div.panel-heading
+        h3.panel-title
+          = "Current Version - "
+          = current_version_label
+            span.pull-right#traffic-error
+      div.panel-body
+        if current_version_rating_count == 0
+          p No ratings for current version!
+        else
+          p We have a rating, we should make the dashboard show it!

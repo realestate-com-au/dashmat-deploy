@@ -1,0 +1,32 @@
+---
+
+- name: Make sure we have /var/log/rea
+  file: path=/var/log/rea state=directory
+
+- name: Make sure we have /var/log/rea/python-dashing
+  file: path=/var/log/rea/python-dashing state=directory
+
+- name: Make virtualenv
+  shell: virtualenv -p $(which python3) /opt/python-dashing
+  environment:
+    PATH: /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
+
+- name: Install init script
+  template: src=python-dashing.init dest="/etc/init/python-dashing.conf" mode=755 owner=root group=root
+
+- name: Copy in syslog
+  template: src=syslog.conf dest=/etc/rsyslog.d/50-python-dashing.conf
+  notify: RestartSyslog
+
+- name: Find status of the python-dashing
+  command: status python-dashing
+  register: python_dashing_status
+  changed_when: false
+
+- name: stop the python-dashing
+  command: stop python-dashing
+  when: python_dashing_status.stdout_lines[0] != "python-dashing stop/waiting"
+
+- name: "Start python-dashing"
+  command: start python-dashing
+

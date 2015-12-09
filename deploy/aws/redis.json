@@ -1,0 +1,70 @@
+{ "AWSTemplateFormatVersion": "2010-09-09"
+, "Description": "Redis stack for the dashing"
+
+, "Parameters":
+  { "VpcId":
+    { "Description": "VpcId of your existing Virtual Private Cloud (VPC)"
+    , "Type": "String"
+    }
+  , "ServicesSubnets":
+    { "Description": "The services subnet the cache goes into"
+    , "Type": "CommaDelimitedList"
+    }
+  , "CacheConnectionsFrom":
+    { "Description": "The security group we allow connections to the cache from"
+    , "Type": "String"
+    , "MinLength": "11"
+    , "MaxLength": "11"
+    , "AllowedPattern": "sg-[a-f0-9]{8}"
+    , "ConstraintDescription": "Must be a valid Security Group ID"
+    }
+  , "ClusterName":
+    { "Description": "The name of the cluster"
+    , "Type": "String"
+    }
+  , "ZoneName":
+    { "Description": "The zone to create the human name in"
+    , "Type": "String"
+    , "MinLength": "1"
+    , "MaxLength": "128"
+    }
+  }
+
+, "Resources":
+  { "RedisSubnetGroup":
+    { "Type": "AWS::ElastiCache::SubnetGroup"
+    , "Properties":
+      { "Description": "Subnets available for the Cache cluster"
+      , "SubnetIds": { "Ref": "ServicesSubnets" }
+      }
+    }
+  , "Redis":
+    { "Type": "AWS::ElastiCache::CacheCluster"
+    , "Properties":
+      { "Engine": "redis"
+      , "NumCacheNodes": "1"
+      , "CacheNodeType": "cache.m1.small"
+      , "ClusterName": { "Ref": "ClusterName" }
+      , "CacheSubnetGroupName": { "Ref": "RedisSubnetGroup" }
+      , "VpcSecurityGroupIds": [ { "Ref": "RedisSecurityGroup" } ]
+      , "PreferredMaintenanceWindow": "Sun:03:00-Sun:04:00"
+      , "AutoMinorVersionUpgrade": "true"
+      }
+    }
+  , "RedisSecurityGroup":
+    { "Type": "AWS::EC2::SecurityGroup"
+    , "Properties":
+      { "GroupDescription": "Permit inbound access Elastic Cache"
+      , "SecurityGroupIngress":
+        [ { "IpProtocol": "tcp"
+          , "FromPort": "6379"
+          , "ToPort": "6379"
+          , "SourceSecurityGroupId": { "Ref": "CacheConnectionsFrom" }
+          }
+        ]
+      , "VpcId": { "Ref": "VpcId" }
+      }
+    }
+  }
+}
+

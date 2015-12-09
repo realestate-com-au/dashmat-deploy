@@ -1,0 +1,7 @@
+---
+
+- name: RestartNginx
+  service: name=nginx state=restarted enabled=yes
+
+- name: RestartSyslog
+  service: name=rsyslog state=restarted enabled=yes

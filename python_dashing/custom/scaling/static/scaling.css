@@ -1,0 +1,19 @@
+td.red {
+	background-color: red;
+}
+
+td.yellow {
+	background-color: yellow;
+}
+
+td.green {
+	background-color: green;
+}
+
+td.empty {
+	background-color: #596D59;
+}
+
+td {
+	font-size: 14px;
+}

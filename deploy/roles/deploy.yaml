@@ -1,0 +1,44 @@
+---
+
+roles:
+  "bamboo/dashing-deployer":
+    description: Role for deploying the dashboard
+    allow_to_assume_me:
+      - { iam: "role/bamboo/bamboo-agent-role", account: devprod }
+
+    allow_permission:
+      - { action: "sns:*", resource: "*"}
+      - { action: "sqs:*", resource: "*"}
+      - { action: "ec2:*", resource: "*" }
+      - { action: "route53:*", resource: "*" }
+      - { action: "elasticache:*", resource: "*" }
+      - { action: "autoscaling:*", resource: "*" }
+      - { action: "cloudformation:*", resource: "*" }
+      - { action: "elasticloadbalancing:*", resource: "*"}
+
+      - { action: "s3:*", resource: { "s3": "project-artifacts-dev"} }
+
+      - { action: "s3:*", resource: "*", account: devprod }
+
+      - { action: "iam:PassRole", resource: { iam: role/dashing-instance-role } }
+
+      - { action: "iam:*", resource: { "iam": "__self__" } }
+      - { action: "iam:*", resource: { "iam": "role/dashing/*" } }
+      - { action: "iam:*", resource: { "iam": "instance-profile/dashing/*" } }
+
+  "dashing-instance-role":
+    description: Role on the dashing instance
+    make_instance_profile: true
+
+    allow_to_assume_me:
+      - { service: ec2 }
+
+    allow_permission:
+      - { action: "cloudformation:DescribeStackResource", resource: "*"}
+      - { action: "cloudwatch:PutMetricData", resource: "*"}
+      - { action: "s3:Get*", resource: "*" }
+      - { action: "s3:Put*", resource: "*" }
+      - { action: "s3:List*", resource: "*" }
+      - { action: "sns:Publish", resource: { arn: sns, identity: dashing-deployment, location: ap-southeast-2 } }
+      - { action: "sts:AssumeRole", resource: { iam: role/dashing/viewer, account: [dev, stg, prod] } }
+

@@ -1,0 +1,20 @@
+---
+
+roles:
+  "dashing/viewer":
+    description: Role for seeing into cloudformation and ec2 stats
+    allow_to_assume_me:
+      - { iam: "role/dashing-instance-role", account: devprod }
+
+    allow_permission:
+      - { action: "ec2:List*", resource: "*" }
+      - { action: "ec2:Describe*", resource: "*" }
+
+      - { action: "autoscaling:List*", resource: "*" }
+      - { action: "autoscaling:Describe*", resource: "*" }
+
+      - { action: "cloudformation:List*", resource: "*" }
+      - { action: "cloudformation:Describe*", resource: "*" }
+
+      - { action: "iam:*", resource: { "iam": "__self__" } }
+

@@ -1,0 +1,9 @@
+- hosts: localhost
+  connection: local
+  roles:
+    - system
+    - python
+    - python-dashing
+    - nginx
+  vars:
+    app_name: dashing
