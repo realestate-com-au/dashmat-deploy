@@ -1,0 +1,40 @@
+table.pretty td, table.pretty th {
+  padding: 0;
+}
+
+table.pretty {
+  border-collapse: collapse;
+  border-spacing: 0;
+  border-collapse: collapse;
+  border-spacing: 0;
+  empty-cells: show;
+  border: 1px solid #cbcbcb;
+  margin-left: auto;
+  margin-right: auto;
+  min-width: 80%;
+  text-align: center;
+}
+
+table.pretty td, table.pretty th {
+  border-left: 1px solid #cbcbcb;
+  border-width: 0 0 0 1px;
+  font-size: inherit;
+  margin: 0;
+  overflow: visible;
+  padding: 0.5em 1em;
+}
+
+table.pretty td:first-child, table.pretty th:first-child {
+  border-left-width: 0;
+}
+
+table.pretty thead {
+  background-color: #E29300;
+  color: #000;
+  text-align: center;
+  vertical-align: bottom;
+}
+
+table.pretty tbody {
+  background-color: #70A9FF
+}

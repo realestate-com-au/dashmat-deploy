@@ -58,7 +58,8 @@ dashboards:
         <CommentsModule datasource="/data/reviews/comments" />
       </flexcontainer>
       <flexcontainer>
-        <ReviewsModule datasource="/data/reviews/reviews" title="IOS Reviews!"/>
+        <ReviewsModule datasource="/data/reviews/total_reviews" title="Total IOS Ratings"/>
+        <ReviewsModule datasource="/data/reviews/current_reviews" title="Current IOS Ratings"/>
       </flexcontainer>
 
   "/scaling":

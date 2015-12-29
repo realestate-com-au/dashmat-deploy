@@ -1,6 +1,9 @@
 from python_dashing.errors import MissingServerOption, PythonDashingError
 from python_dashing.core_modules.base import ServerBase
 
+from input_algorithms import spec_base as sb
+from input_algorithms.meta import Meta
+
 import requests
 import logging
 import random
@@ -10,47 +13,46 @@ log = logging.getLogger("custom.reviews.server")
 
 class Server(ServerBase):
     def setup(self, **kwargs):
-        errors = []
-        for key in ("app_id", "itunes_country_code"):
-            if key not in kwargs:
-                errors.append(MissingServerOption(wanted=key, module="custom.reviews"))
-            else:
-                setattr(self, key, kwargs[key])
+        kwargs = sb.set_options(
+              app_id = sb.required(sb.string_or_int_as_string_spec())
+            , itunes_country_code = sb.required(sb.string_choice_spec(["au"]))
+            ).normalise(Meta({}, []), kwargs)
 
-        available = ("au", )
-        if self.itunes_country_code not in available:
-            errors.append(PythonDashingError("Sorry, specified itunes country code not support", wanted=self.itunes_country_code, available=available))
-
-        if errors:
-            raise MissingServerOption(_errors=errors)
+        for key, val in kwargs.items():
+            setattr(self, key, val)
 
     @property
     def routes(self):
-        yield "/reviews", self.reviews
-
-    @property
-    def update_registration(self):
-        yield "#reviews", "/reviews", {"every": 60}
+        yield "current_reviews", self.current_reviews
+        yield "total_reviews", self.total_reviews
+        yield "comments", self.comments
 
     @property
     def register_checks(self):
         yield "0 */3 * * *", self.make_stats
 
-    def reviews(self):
-        data = json.loads(self.get_string("reviews-{0}-{1}".format(self.app_id, self.itunes_country_code)).decode('utf-8'))
-        comments = json.loads(self.get_string("reviews-{0}-{1}-comments".format(self.app_id, self.itunes_country_code)).decode('utf-8'))['userReviewList']
+    def total_reviews(self, datastore, latest=False):
+        key = "reviews-{0}-{1}".format(self.app_id, self.itunes_country_code)
+        if latest:
+            key = "{0}-latest".format(key)
+        data = datastore.retrieve(key)
+
+        label = data['ariaLabelForRatings']
+        total_num_ratings = data['ratingCount']
+        total_num_reviews = data.get('totalNumberOfReviews')
+        rating_list = list(zip(("5 stars", "4 stars", "3 stars", "2 stars", "1 stars"), data['ratingCountList']))
+        return {"label": label, "total_num_ratings": total_num_ratings, "total_num_reviews": total_num_reviews, "rating_list": rating_list}
+
+    def current_reviews(self, datastore):
+        return self.total_reviews(datastore, latest=True)
+
+    def comments(self, datastore):
+        comments = datastore.retrieve("reviews-{0}-{1}-comments".format(self.app_id, self.itunes_country_code))['userReviewList']
 
         nice_comments = [r['body'] for r in comments if r['rating'] > 3]
         random.shuffle(nice_comments)
 
-        label = data['ariaLabelForRatings']
-        total_num_ratings = data['ratingCount']
-        total_num_reviews = data['totalNumberOfReviews']
-        rating_list = list(zip(("5 stars", "4 stars", "3 stars", "2 stars", "1 stars"), data['ratingCountList']))
-
-        current_version_label = data['currentVersion']['ariaLabelForRatings']
-        current_version_rating_count = int(data['currentVersion']['ratingCount'])
-        return "results.jade", {"label": label, "total_num_ratings": total_num_ratings, "total_num_reviews": total_num_reviews, "rating_list": rating_list, "current_version_rating_count": current_version_rating_count, "current_version_label": current_version_label, "nice_comments": nice_comments}
+        return {"nice_comments": nice_comments}
 
     def make_stats(self, time_since_last_check):
         url = "https://itunes.apple.com/{0}/customer-reviews/id{1}".format(self.itunes_country_code, self.app_id)
@@ -59,7 +61,11 @@ class Server(ServerBase):
             headers.update({"X-Apple-Store-Front": "143460,32"})
         params = {"dataOnly": "true", "displayable-kind": 11, "appVersion": "all"}
         data = json.loads(requests.get(url, headers=headers, params=params).content.decode('utf-8'))
-        self.set_string("reviews-{0}-{1}".format(self.app_id, self.itunes_country_code), json.dumps(data))
+        yield "reviews-{0}-{1}".format(self.app_id, self.itunes_country_code), data
+
+        params = {"dataOnly": "true", "displayable-kind": 11, "appVersion": "latest"}
+        data = json.loads(requests.get(url, headers=headers, params=params).content.decode('utf-8'))
+        yield "reviews-{0}-{1}-latest".format(self.app_id, self.itunes_country_code), data['currentVersion']
 
         url = "https://itunes.apple.com/WebObjects/MZStore.woa/wa/userReviewsRow"
         endIndex = data['totalNumberOfReviews']
@@ -72,5 +78,5 @@ class Server(ServerBase):
             , "appVersion": "all"
             }
         data = json.loads(requests.get(url, headers=headers, params=params).content.decode('utf-8'))
-        self.set_string("reviews-{0}-{1}-comments".format(self.app_id, self.itunes_country_code), json.dumps(data))
+        yield "reviews-{0}-{1}-comments".format(self.app_id, self.itunes_country_code), data
 
