@@ -2,7 +2,10 @@ from python_dashing.core_modules.amazon_base.server import ServerMixin
 from python_dashing.core_modules.base import ServerBase
 from python_dashing.errors import PythonDashingError
 
-from itertools import zip_longest
+from input_algorithms import spec_base as sb
+from input_algorithms.meta import Meta
+
+from six.moves import zip_longest
 from itertools import chain
 import calendar
 import requests
@@ -14,15 +17,19 @@ log = logging.getLogger("custom.scaling.server")
 
 class Server(ServerBase, ServerMixin):
     def setup(self, **kwargs):
-        errors = []
-        for key in ("dev_account", "stg_account", "prod_account", "role_to_assume", "cloudability_auth_token"):
-            if key not in kwargs:
-                errors.append(MissingServerOption(wanted=key, module="custom.scaling"))
-            else:
-                setattr(self, key, kwargs[key])
+        account_spec = sb.set_options(
+              account_id = sb.required(sb.string_spec())
+            , role_to_assume = sb.required(sb.string_spec())
+            )
 
-        if errors:
-            raise MissingServerOption(_errors=errors)
+        kwargs = sb.set_options(
+              accounts = sb.required(sb.dictof(sb.string_spec(), account_spec))
+            , ordered_accounts = sb.required(sb.listof(sb.string_spec()))
+            , cloudability_auth_token = sb.required(sb.any_spec())
+            ).normalise(Meta({}, []), kwargs)
+
+        for key, val in kwargs.items():
+            setattr(self, key, val)
 
     @property
     def cloudability_auth(self):
@@ -34,35 +41,47 @@ class Server(ServerBase, ServerMixin):
 
     @property
     def routes(self):
-        yield "/scaling", self.scaling
+        yield "cost_last_month", lambda ds: self.cost(ds, this_month=False)
+        yield "cost_this_month", lambda ds: self.cost(ds, this_month=True)
 
-    def scaling(self):
-        dev = json.loads(self.get_string("scaling-{0}".format(self.dev_account)).decode('utf-8'))
-        stg = json.loads(self.get_string("scaling-{0}".format(self.stg_account)).decode('utf-8'))
-        prod = json.loads(self.get_string("scaling-{0}".format(self.prod_account)).decode('utf-8'))
+        yield "scaling", self.scaling
+        yield "instance_count", self.instance_counts
 
+    def cost(self, datastore, this_month=True):
+        by_account = []
+
+        for name in self.ordered_accounts:
+            options = self.accounts[name]
+            data = datastore.retrieve("scaling-{0}".format(options["account_id"]))
+            by_account.append((name, data['cost'][this_month]))
+
+        return {"cost": by_account}
+
+    def instance_counts(self, datastore):
+        by_account = []
+
+        for name in self.ordered_accounts:
+            options = self.accounts[name]
+            data = datastore.retrieve("scaling-{0}".format(options["account_id"]))
+            by_account.append((name, data))
+        return {"instance_counts": by_account}
+
+    def scaling(self, datastore):
         by_account = []
         applications = {}
-        for name, acnt in (('dev', dev), ('stg', stg), ('prod', prod)):
-            by_account.append((name, acnt))
-            for options in acnt['autoscaling']:
-                if options['name'] not in applications:
-                    applications[options['name']] = {}
-                applications[options['name']][name] = options
 
-        def td(options):
-            if not options:
-                return '<td class="empty"></td>'
-            kls = "green" if options['alive'] == options['desired'] else "yellow"
-            kls = "red" if options['alive'] == 0 and options['desired'] > 0 else kls
-            return '<td class="{0}">{1} | {2} | {3}</td>'.format(kls, options['desired'], options['alive'], options['dead'])
+        for name in self.ordered_accounts:
+            options = self.accounts[name]
+            data = datastore.retrieve("scaling-{0}".format(options["account_id"]))
 
-        applications = reversed(sorted(applications.items(), key= lambda item: 'prod' in item[1]))
-        return "results.jade", {"td": td, "applications": applications, "by_account": by_account}
+            by_account.append((name, options["account_id"]))
+            for scaling_options in data['autoscaling']:
+                if scaling_options['name'] not in applications:
+                    applications[scaling_options['name']] = {}
+                applications[scaling_options['name']][name] = scaling_options
 
-    @property
-    def update_registration(self):
-        yield "#scaling", "/scaling", {"every": 60}
+        applications = list(reversed(sorted(applications.items(), key= lambda item: self.ordered_accounts[-1] in item[1])))
+        return {"applications": applications, "by_account": by_account}
 
     @property
     def register_checks(self):
@@ -72,12 +91,13 @@ class Server(ServerBase, ServerMixin):
                 return func
             return ret
 
-        yield "*/5 * * * *", named("dev_stats")(lambda t: self.make_stats(self.dev_account))
-        yield "*/5 * * * *", named("stg_stats")(lambda t: self.make_stats(self.stg_account))
-        yield "*/5 * * * *", named("prod_stats")(lambda t: self.make_stats(self.prod_account))
+        make_statser = lambda name, options: named(name)(lambda t: self.make_stats(options))
+        for name in self.ordered_accounts:
+            options = self.accounts[name]
+            yield "*/5 * * * *", make_statser(name, options)
 
-    def make_stats(self, account):
-        session = self.make_boto_session(account)
+    def make_stats(self, options):
+        session = self.make_boto_session(options["account_id"], options["role_to_assume"])
         ec2 = session.client("ec2", "ap-southeast-2")
         terminated = lambda instance: instance["State"]["Name"] in ("terminated", "shutting-down")
 
@@ -105,9 +125,9 @@ class Server(ServerBase, ServerMixin):
 
             found.append({"alive": num_alive_instances, "dead": num_dead_instances, "desired": desired_capacity, "name": name })
 
-        log.info("Finding cost from cloudability for {0}".format(account))
-        cost = self.cost_from_cloudability(account)
-        self.set_string("scaling-{0}".format(account), json.dumps({"dead": total_num_dead_instances, "alive": total_num_alive_instances, "autoscaling": found, "cost": cost}))
+        log.info("Finding cost from cloudability for {0}".format(options["account_id"]))
+        cost = self.cost_from_cloudability(options["account_id"])
+        yield "scaling-{0}".format(options["account_id"]), {"dead": total_num_dead_instances, "alive": total_num_alive_instances, "autoscaling": found, "cost": cost}
 
     def cost_from_cloudability(self, account):
         today = datetime.datetime.utcnow().date()

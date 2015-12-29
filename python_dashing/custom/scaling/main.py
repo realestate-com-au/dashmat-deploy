@@ -4,9 +4,13 @@ class Scaling(Module):
     relative_to = "custom.scaling"
 
     @classmethod
+    def npm_deps(kls):
+        return {
+              "react-bootstrap": "^0.28.1"
+            }
+
+    @classmethod
     def dependencies(kls):
         yield "python_dashing.core_modules.amazon_base.main:AmazonBase"
-
-    @property
-    def css(self):
-        yield "scaling.css"
+        yield "python_dashing.core_modules.components.main:Components"
+        yield "python_dashing.core_modules.bootstrap.main:BootStrap"
