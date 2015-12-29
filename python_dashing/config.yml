@@ -12,9 +12,6 @@ modules:
   kms_secrets:
     import_path: python_dashing.core_modules.amazon_base.main:AmazonBase
 
-  index:
-    import_path: python_dashing.core_modules.index.main:Index
-
   reviews:
     import_path: custom.reviews.main:Reviews
     server_options:
@@ -42,15 +39,10 @@ modules:
 
 dashboards:
   "/":
-    imports:
-      - [[Index, IndexItem], "index"]
-    layout: |
-      <Index>
-        <IndexItem href="/reviews" desc="IOS Reviews Dashboard"/>
-        <IndexItem href="/scaling" desc="Scaling Groups Dashboard"/>
-      </Index>
+    is_index: true
 
   "/reviews":
+    description: "IOS Reviews Dashboard"
     imports:
       - [[CommentsModule, ReviewsModule], "reviews"]
     layout: |
@@ -63,6 +55,7 @@ dashboards:
       </flexcontainer>
 
   "/scaling":
+    description: "Scaling Groups Dashboard"
     imports:
       - [[ScalingModule, InstanceCountModule, CostModule], "scaling"]
     layout: |
