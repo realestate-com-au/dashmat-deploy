@@ -1,8 +1,6 @@
 from python_dashing.core_modules.base import Module
 
 class Scaling(Module):
-    relative_to = "custom.scaling"
-
     @classmethod
     def npm_deps(kls):
         return {
