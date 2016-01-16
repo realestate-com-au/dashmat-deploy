@@ -8,7 +8,7 @@ PROJECT="$DIR/../../"
 
 export GIT_COMMIT=$(git rev-parse HEAD)
 
-if ! $PROJECT/docker/harpoon.sh make_artifact --non-interactive; then
+if ! $PROJECT/deploy/bespin.sh publish_artifacts devprod app; then
   echo "Failed to make the artifact!"
   exit 1
 fi
