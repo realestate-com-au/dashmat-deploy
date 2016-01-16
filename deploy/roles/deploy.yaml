@@ -4,7 +4,7 @@ roles:
   "bamboo/dashing-deployer":
     description: Role for deploying the dashboard
     allow_to_assume_me:
-      - { iam: "role/bamboo/bamboo-agent-role", account: devprod }
+      - { iam: root }
 
     allow_permission:
       - { action: "sns:*", resource: "*"}
