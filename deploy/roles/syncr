@@ -29,7 +29,7 @@ if sys.version.startswith(\"3.4\"): sys.exit(1)
   fi
 fi
 
-required_version=0.5.8.7.5
+required_version=0.5.8.9
 
 source $TMP_DIR/bin/activate
 
