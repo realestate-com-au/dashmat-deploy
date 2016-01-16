@@ -70,8 +70,12 @@ stacks:
               - ["{config_root}/../../python_dashing", "/"]
             command:
               - ./run.sh
+              - mkdir compiled_static compiled_prep -p
+              - ./run.sh collect_dashboard_js
             add_into_tar:
               - [".python-dashing/lib/python3.4/site-packages/", "/artifacts/python_dashing/site-packages"]
+              - ["compiled_prep", "/artifacts/python_dashing/compiled_prep"]
+              - ["compiled_static", "/artifacts/python_dashing/compiled_static"]
 
     confirm_deployment:
       auto_scaling_group_name: "{vars.auto_scaling_group_name}"

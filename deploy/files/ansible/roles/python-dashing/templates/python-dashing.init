@@ -8,7 +8,7 @@ script
      sudo chown -R ec2-user:ec2-user /opt/python-dashing \
   && sudo chown -R ec2-user:ec2-user /var/tmp/artifacts/python_dashing \
   && sudo cp -R /var/tmp/artifacts/python_dashing/site-packages/* /opt/python-dashing/lib/python3.4/site-packages \
-  && sudo -iu ec2-user bash -c "cd /var/tmp/artifacts/python_dashing/python-dashing && /opt/python-dashing/bin/pip install -e . && cd /opt/python-dashing && PYTHONPATH=/var/tmp/artifacts/python_dashing:$PYTHONPATH /opt/python-dashing/bin/python -c 'from python_dashing.executor import main; main()' serve --syslog python-dashing --redis-host <placeholder> --config /var/tmp/artifacts/python_dashing/config.yml" \
+  && sudo -iu ec2-user bash -c "cd /var/tmp/artifacts/python_dashing/python-dashing && /opt/python-dashing/bin/pip install -e . && cd /opt/python-dashing && PYTHONPATH=/var/tmp/artifacts/python_dashing:$PYTHONPATH /opt/python-dashing/bin/python -c 'from python_dashing.executor import main; main()' serve --syslog python-dashing --redis-host <placeholder> --no-dynamic-dashboard-js --config /var/tmp/artifacts/python_dashing/config.yml" \
   &> /var/log/rea/python-dashing/init
 end script
 
