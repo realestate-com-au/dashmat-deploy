@@ -59,7 +59,9 @@ stacks:
 
         paths:
           - "{config_root}/../files/ansible:/artifacts/ansible"
-          - "{config_root}/../../python_dashing:/artifacts/python_dashing"
+          - "{config_root}/../../python_dashing/custom:/artifacts/python_dashing/custom"
+          - "{config_root}/../../python_dashing/run.sh:/artifacts/python_dashing/run.sh"
+          - "{config_root}/../../python_dashing/config.yml:/artifacts/python_dashing/config.yml"
 
         files:
           - content: "{__stack__.vars.version}"
@@ -69,6 +71,7 @@ stacks:
           - copy:
               - ["{config_root}/../../python_dashing", "/"]
             command:
+              - rm -rf .python-dashing
               - ./run.sh
               - mkdir compiled_static compiled_prep -p
               - ./run.sh collect_dashboard_js
