@@ -96,16 +96,13 @@
     , "Type": "String"
     , "Default": "dashing-instance-role"
     }
-  }
-
-, "Mappings":
-  { "VpcId2AZs":
-    { "vpc-b1ab5ed9": { "AZs": [ "ap-southeast-2a", "ap-southeast-2b" ] } }
-  , "VpcId2Subnets":
-    { "vpc-b1ab5ed9":
-      { "private":   [ "subnet-4faa5f27", "subnet-4caa5f24" ]
-      , "services":  [ "subnet-f911058d", "subnet-184ba27d" ]
-      }
+  , "AZs":
+    { "Description": "The subnets to put the dashing into"
+    , "Type": "CommaDelimitedList"
+    }
+  , "ServicesSubnets":
+    { "Description": "The subnets to put the dashing into"
+    , "Type": "CommaDelimitedList"
     }
   }
 
@@ -113,7 +110,7 @@
   { "AppServerELB":
     { "Type":"AWS::ElasticLoadBalancing::LoadBalancer"
     , "Properties":
-      { "Subnets": { "Fn::FindInMap": [ "VpcId2Subnets", { "Ref":"MyVpcId" }, "services" ] }
+      { "Subnets": { "Ref": "ServicesSubnets" }
       , "Listeners":
         [ { "LoadBalancerPort":"80", "InstancePort":80
           , "Protocol":"HTTP"
@@ -165,16 +162,14 @@
   , "AppServerAutoScalingGroup":
     { "Type":"AWS::AutoScaling::AutoScalingGroup"
     , "Properties":
-      { "AvailabilityZones": { "Fn::FindInMap": [ "VpcId2AZs", { "Ref":"MyVpcId" }, "AZs" ] }
+      { "AvailabilityZones": { "Ref": "AZs" }
       , "HealthCheckType": "ELB"
       , "HealthCheckGracePeriod": { "Ref": "HealthCheckDelay" }
       , "LaunchConfigurationName": { "Ref": "AppServerLaunchConfiguration" }
       , "LoadBalancerNames": [ { "Ref":"AppServerELB" } ]
       , "MinSize": { "Ref" : "MinScalingSize" }
       , "MaxSize": { "Ref" : "MaxScalingSize" }
-      , "VPCZoneIdentifier":
-        { "Fn::FindInMap": [ "VpcId2Subnets", { "Ref":"MyVpcId" }, "private" ]
-        }
+      , "VPCZoneIdentifier": { "Ref": "ServicesSubnets" }
       , "Tags":
         [ { "Key":"CloudFormationStack"
           , "Value": { "Ref":"AWS::StackName" }

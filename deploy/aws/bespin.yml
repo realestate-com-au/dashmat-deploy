@@ -26,6 +26,7 @@ environments:
 
 ssh:
   user: ec2-user
+  bastion_user: ec2-user
   auto_scaling_group_name: "{vars.auto_scaling_group_name}"
 
 stacks:
@@ -95,11 +96,13 @@ stacks:
       DeploymentSNSTopicName: dashing-deployment
       DeploymentSQSTopicName: dashing-deployment
 
+      AZs: XXX_AZS_XXX
       MyVpcId: XXX_VPC_ID_XXX
       AppName: XXX_APP_NAME_XXX
       ZoneName: XXX_ZONE_NAME_XXX
       SSHKeyName: XXX_APP_NAME_XXX
       BuildNumber: XXX_BUILD_NUMBER_XXX
+      ServicesSubnets: XXX_SERVICES_SUBNETS_XXX
       ArtifactLocation: XXX_ARTIFACT_LOCATION_XXX
       CacheConnectionsFrom: XXX_CACHE_CONNECTIONS_FROM_XXX
 
