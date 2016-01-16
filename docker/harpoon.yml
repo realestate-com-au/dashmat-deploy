@@ -28,7 +28,7 @@ images:
     tasks:
       make_artifact:
         options:
-          bash: "./dashing/deploy/bespin.sh publish_artifacts {ENV:env} app"
+          bash: "/dashing/deploy/bespin.sh publish_artifacts {ENV:env} app"
           env:
             - ENV
             - BUILD_NUMBER
