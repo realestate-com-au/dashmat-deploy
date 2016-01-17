@@ -50,8 +50,8 @@ dashboards:
         <CommentsModule datasource="/data/reviews/comments" />
       </flexcontainer>
       <flexcontainer>
-        <ReviewsModule datasource="/data/reviews/total_reviews" title="Total IOS Ratings"/>
-        <ReviewsModule datasource="/data/reviews/current_reviews" title="Current IOS Ratings"/>
+        <ReviewsModule width="auto" datasource="/data/reviews/total_reviews" title="Total IOS Ratings"/>
+        <ReviewsModule width="auto" datasource="/data/reviews/current_reviews" title="Current IOS Ratings"/>
       </flexcontainer>
 
   "/scaling":
@@ -60,7 +60,7 @@ dashboards:
       - [[ScalingModule, InstanceCountModule, CostModule], "scaling"]
     layout: |
       <flexcontainer>
-        <ScalingModule datasource="/data/scaling/scaling" title="" />
+        <ScalingModule width="auto" datasource="/data/scaling/scaling" title="" />
       </flexcontainer>
       <flexcontainer>
         <InstanceCountModule datasource="/data/scaling/instance_count" title="Instance Count" />
