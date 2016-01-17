@@ -20,6 +20,7 @@ To deploy:
 	# Modify required_version in run.sh to be the version of python-dashing you wish to use
 	# Modify <officeip> in deploy/aws/app.json
 	# Modify <placeholder> in deploy/files/ansible/roles/python-dashing/templates/python-dashing.init
+	# Make a keypair in amazon with the name 'dashing'
 
 	$ ENV=devprod BUILD_NUMBER=9001 ./deploy/bamboo/make_artifact.sh
 	$ ENV=devprod BUILD_NUMBER=9001 ./deploy/bamboo/deploy.sh
