@@ -67,7 +67,7 @@ stacks:
 
         files:
           - content: "{__stack__.vars.version}"
-            path: /artifacts/python_dashing/python-dashing/python_dashing/server/static/version
+            path: /artifacts/python_dashing/site-packages/python_dashing/server/static/version
 
         commands:
           - temp_dir: "{config_root}/compiled_prep"
