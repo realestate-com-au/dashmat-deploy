@@ -1,8 +1,8 @@
 ---
 
-- name: Does I has python?
-  stat: path=/usr/local/bin/python3 
-  register: has_python
+- name: Get me some virtualenv and python
+  yum: name={{item}} state=latest
+  with_items:
+    - python34
+    - python34-virtualenv
 
-- include: install_python.yml
-  when: not has_python.stat.exists

@@ -10,7 +10,7 @@
   file: path=/var/tmp/artifacts/python_dashing/compiled_prep state=directory
 
 - name: Make virtualenv
-  shell: virtualenv -p $(which python3) /opt/python-dashing
+  shell: virtualenv-3.4 /opt/python-dashing
   environment:
     PATH: /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
