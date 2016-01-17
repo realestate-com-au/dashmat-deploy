@@ -1,6 +1,6 @@
 ---
 
-bespin_version: "0.5.6.4.3"
+bespin_version: "0.5.6.9"
 
 bespin:
   assume_role: role/bamboo/dashing-deployer
@@ -70,7 +70,8 @@ stacks:
             path: /artifacts/python_dashing/python-dashing/python_dashing/server/static/version
 
         commands:
-          - copy:
+          - temp_dir: "{config_root}/compiled_prep"
+            copy:
               - ["{config_root}/../../python_dashing", "/"]
             command:
               - rm -rf .python-dashing
