@@ -6,6 +6,9 @@
 - name: Make sure we have /var/log/rea/python-dashing
   file: path=/var/log/rea/python-dashing state=directory
 
+- name: Make sure we have compiled_prep
+  file: path=/var/tmp/artifacts/python_dashing/compiled_prep state=directory
+
 - name: Make virtualenv
   shell: virtualenv -p $(which python3) /opt/python-dashing
   environment:
