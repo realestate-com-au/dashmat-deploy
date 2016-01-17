@@ -191,6 +191,7 @@
         { "MinInstancesInService": { "Ref" : "MinScalingSize" }
         , "MaxBatchSize": "2"
         , "PauseTime": "PT15M"
+        , "WaitOnResourceSignals": "true"
         , "SuspendProcesses": ["ScheduledActions"]
         }
       , "AutoScalingScheduledAction" : { "IgnoreUnmodifiedGroupSizeProperties" : true }
