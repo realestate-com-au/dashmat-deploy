@@ -14,6 +14,7 @@ vars:
   sleep_time: 15
   environment: "{environment}"
   auto_scaling_group_name: "AppServerAutoScalingGroup"
+  azs: "ap-southeast-2a,ap-southeast-2b"
 
 environments:
   devprod:
