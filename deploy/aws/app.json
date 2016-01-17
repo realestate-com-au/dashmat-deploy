@@ -124,7 +124,6 @@
         , "Timeout":"10"
         }
       , "SecurityGroups": [ { "Ref":"InternalELBSecurityGroup" } ]
-      , "Scheme": "internal"
       , "CrossZone": "true"
       }
     }
