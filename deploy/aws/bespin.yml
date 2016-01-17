@@ -92,9 +92,9 @@ stacks:
         deployment_queue: "dashing-deployment"
 
     params_yaml:
-      AMI: ami-fd9cecc7
-      MinScalingSize: 0
-      MaxScalingSize: 1
+      AMI: ami-48d38c2b
+      MinScalingSize: 1
+      MaxScalingSize: 2
       DeploymentSNSTopicName: dashing-deployment
       DeploymentSQSTopicName: dashing-deployment
 
