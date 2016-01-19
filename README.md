@@ -1,7 +1,7 @@
-Python Dashing
+DashMat Deploy
 ==============
 
-This is a dashboard framework written in Python.
+This is for a dashboard framework written in Python named dashmat.
 
 More documentation and tests are coming. First we convert it to react.
 
