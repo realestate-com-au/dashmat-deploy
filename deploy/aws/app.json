@@ -416,12 +416,12 @@
       , "ResourceRecords": [ { "Fn::GetAtt": [ "AppServerELB", "DNSName" ] } ]
       }
     }
-  , "CnameOfPythonDashing":
+  , "CnameOfDashMat":
     { "Type": "AWS::Route53::RecordSet"
     , "Properties":
       { "Comment": "Public CNAME"
       , "HostedZoneName": { "Ref": "ZoneName" }
-      , "Name": { "Fn::Join":[ "", [ "python-dashing", ".", { "Ref": "ZoneName" } ] ] }
+      , "Name": { "Fn::Join":[ "", [ "dashmat", ".", { "Ref": "ZoneName" } ] ] }
       , "Type": "CNAME"
       , "TTL": "600"
       , "ResourceRecords": [ { "Fn::GetAtt": [ "AppServerELB", "DNSName" ] } ]

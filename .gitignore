@@ -15,7 +15,7 @@ deploy/.bespin
 docker/.harpoon
 deploy/roles/.syncr
 
-python_dashing/.python-dashing
-python_dashing/compiled*
-python_dashing/data.json
+dashmat/.dashmat
+dashmat/compiled*
+dashmat/data.json
 

@@ -61,27 +61,27 @@ stacks:
 
         paths:
           - "{config_root}/../files/ansible:/artifacts/ansible"
-          - "{config_root}/../../python_dashing/custom:/artifacts/python_dashing/custom"
-          - "{config_root}/../../python_dashing/run.sh:/artifacts/python_dashing/run.sh"
-          - "{config_root}/../../python_dashing/config.yml:/artifacts/python_dashing/config.yml"
+          - "{config_root}/../../dashmat/custom:/artifacts/dashmat/custom"
+          - "{config_root}/../../dashmat/run.sh:/artifacts/dashmat/run.sh"
+          - "{config_root}/../../dashmat/config.yml:/artifacts/dashmat/config.yml"
 
         files:
           - content: "{__stack__.vars.version}"
-            path: /artifacts/python_dashing/site-packages/python_dashing/server/static/version
+            path: /artifacts/dashmat/site-packages/dashmat/server/static/version
 
         commands:
           - temp_dir: "{config_root}/compiled_prep"
             copy:
-              - ["{config_root}/../../python_dashing", "/"]
+              - ["{config_root}/../../dashmat", "/"]
             command:
-              - rm -rf .python-dashing
+              - rm -rf .dashmat
               - ./run.sh
               - mkdir compiled_static compiled_prep -p
               - ./run.sh collect_dashboard_js
             add_into_tar:
-              - [".python-dashing/lib/python3.4/site-packages/", "/artifacts/python_dashing/site-packages"]
-              - ["compiled_prep", "/artifacts/python_dashing/compiled_prep"]
-              - ["compiled_static", "/artifacts/python_dashing/compiled_static"]
+              - [".dashmat/lib/python3.4/site-packages/", "/artifacts/dashmat/site-packages"]
+              - ["compiled_prep", "/artifacts/dashmat/compiled_prep"]
+              - ["compiled_static", "/artifacts/dashmat/compiled_static"]
 
     confirm_deployment:
       auto_scaling_group_name: "{vars.auto_scaling_group_name}"

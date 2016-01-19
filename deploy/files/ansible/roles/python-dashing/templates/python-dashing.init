@@ -5,10 +5,10 @@ respawn
 # Also our version of upstart is too old to have nice support for setting users
 
 script
-     sudo chown -R ec2-user:ec2-user /opt/python-dashing \
-  && sudo chown -R ec2-user:ec2-user /var/tmp/artifacts/python_dashing \
-  && sudo cp -R /var/tmp/artifacts/python_dashing/site-packages/* /opt/python-dashing/lib/python3.4/site-packages \
-  && sudo -iu ec2-user bash -c "cd /opt/python-dashing && PYTHONPATH=/var/tmp/artifacts/python_dashing:$PYTHONPATH /opt/python-dashing/bin/python -c 'from python_dashing.executor import main; main()' serve --syslog python-dashing --redis-host <placeholder> --no-dynamic-dashboard-js --config /var/tmp/artifacts/python_dashing/config.yml" \
-  &> /var/log/rea/python-dashing/init
+     sudo chown -R ec2-user:ec2-user /opt/dashmat \
+  && sudo chown -R ec2-user:ec2-user /var/tmp/artifacts/dashmat \
+  && sudo cp -R /var/tmp/artifacts/dashmat/site-packages/* /opt/dashmat/lib/python3.4/site-packages \
+  && sudo -iu ec2-user bash -c "cd /opt/dashmat && PYTHONPATH=/var/tmp/artifacts/dashmat:$PYTHONPATH /opt/dashmat/bin/python -c 'from dashmat.executor import main; main()' serve --syslog dashmat --redis-host <placeholder> --no-dynamic-dashboard-js --config /var/tmp/artifacts/dashmat/config.yml" \
+  &> /var/log/rea/dashmat/init
 end script
 

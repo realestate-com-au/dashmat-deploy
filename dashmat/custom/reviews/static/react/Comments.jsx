@@ -1,6 +1,6 @@
 import React, {Component, PropTypes} from 'react';
-import WidgetBox from '/modules/python_dashing.core_modules.components/WidgetBox.jsx';
-import styles from '/modules/python_dashing.server/Dashboard.css';
+import WidgetBox from '/modules/dashmat.core_modules.components/WidgetBox.jsx';
+import styles from '/modules/dashmat.server/Dashboard.css';
 
 export class CommentsModule extends WidgetBox {
   render() {

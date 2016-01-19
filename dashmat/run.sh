@@ -9,7 +9,7 @@ fi
 export PATH=/bin:/usr/bin:/usr/local/bin:/usr/sbin:/usr/local/sbin
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-TMP_DIR="$DIR/.python-dashing"
+TMP_DIR="$DIR/.dashmat"
 if [[ ! -d $TMP_DIR ]]; then
   opts=""
   if ! which python3; then
@@ -32,16 +32,16 @@ if sys.version.startswith(\"3.4\"): sys.exit(1)
   fi
 fi
 
-required_version=0.2.4.4
+required_version=0.2.5
 
 source $TMP_DIR/bin/activate
 export PYTHONPATH=$PYTHONPATH:$DIR
 
 if ! $IGNORE_PIP || [[ -z ${IGNORE_PIP} ]]; then
   pip install pip --upgrade
-  pip install python_dashing==$required_version
-  pip install -r <($TMP_DIR/bin/python-dashing requirements --config $DIR/config.yml)
+  pip install dashmat==$required_version
+  pip install -r <($TMP_DIR/bin/dashmat requirements --config $DIR/config.yml)
 fi
 
-export PYTHON_DASHING_CONFIG=$DIR/config.yml
-python-dashing "$@"
+export DASHMAT_CONFIG=$DIR/config.yml
+dashmat "$@"

@@ -3,7 +3,7 @@
   roles:
     - system
     - python
-    - python-dashing
+    - dashmat
     - nginx
   vars:
     app_name: dashing

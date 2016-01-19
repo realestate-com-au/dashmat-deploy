@@ -1,5 +1,5 @@
-from python_dashing.errors import MissingServerOption, PythonDashingError
-from python_dashing.core_modules.base import ServerBase
+from dashmat.errors import MissingServerOption, DashMatError
+from dashmat.core_modules.base import ServerBase
 
 from input_algorithms import spec_base as sb
 from input_algorithms.meta import Meta

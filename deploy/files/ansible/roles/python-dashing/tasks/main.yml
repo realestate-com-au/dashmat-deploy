@@ -3,33 +3,33 @@
 - name: Make sure we have /var/log/rea
   file: path=/var/log/rea state=directory
 
-- name: Make sure we have /var/log/rea/python-dashing
-  file: path=/var/log/rea/python-dashing state=directory
+- name: Make sure we have /var/log/rea/dashmat
+  file: path=/var/log/rea/dashmat state=directory
 
 - name: Make sure we have compiled_prep
-  file: path=/var/tmp/artifacts/python_dashing/compiled_prep state=directory
+  file: path=/var/tmp/artifacts/dashmat/compiled_prep state=directory
 
 - name: Make virtualenv
-  shell: virtualenv-3.4 /opt/python-dashing
+  shell: virtualenv-3.4 /opt/dashmat
   environment:
     PATH: /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
 - name: Install init script
-  template: src=python-dashing.init dest="/etc/init/python-dashing.conf" mode=755 owner=root group=root
+  template: src=dashmat.init dest="/etc/init/dashmat.conf" mode=755 owner=root group=root
 
 - name: Copy in syslog
-  template: src=syslog.conf dest=/etc/rsyslog.d/50-python-dashing.conf
+  template: src=syslog.conf dest=/etc/rsyslog.d/50-dashmat.conf
   notify: RestartSyslog
 
-- name: Find status of the python-dashing
-  command: status python-dashing
-  register: python_dashing_status
+- name: Find status of the dashmat
+  command: status dashmat
+  register: dashmat_status
   changed_when: false
 
-- name: stop the python-dashing
-  command: stop python-dashing
-  when: python_dashing_status.stdout_lines[0] != "python-dashing stop/waiting"
+- name: stop the dashmat
+  command: stop dashmat
+  when: dashmat_status.stdout_lines[0] != "dashmat stop/waiting"
 
-- name: "Start python-dashing"
-  command: start python-dashing
+- name: "Start dashmat"
+  command: start dashmat
 

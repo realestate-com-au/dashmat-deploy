@@ -1,5 +1,5 @@
 import React, {Component, PropTypes} from 'react';
-import WidgetBox from '/modules/python_dashing.core_modules.components/WidgetBox.jsx';
+import WidgetBox from '/modules/dashmat.core_modules.components/WidgetBox.jsx';
 
 export default class CostModule extends WidgetBox {
   render_inner() {

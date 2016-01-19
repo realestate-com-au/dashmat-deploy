@@ -15,11 +15,11 @@ To bootstrap deployment and viewer roles
 To deploy:
 
 	# Modify <placeholders> in deploy/aws/bespin.yml
-	# Modify <placeholders> in python_dashing/config.yml
+	# Modify <placeholders> in dashmat/config.yml
 	# Modify <placeholder> in deploy/files/ansible/roles/nginx/templates/app.conf
-	# Modify required_version in run.sh to be the version of python-dashing you wish to use
+	# Modify required_version in run.sh to be the version of dashmat you wish to use
 	# Modify <officeip> in deploy/aws/app.json
-	# Modify <placeholder> in deploy/files/ansible/roles/python-dashing/templates/python-dashing.init
+	# Modify <placeholder> in deploy/files/ansible/roles/dashmat/templates/dashmat.init
 	# Make a keypair in amazon with the name 'dashing'
 
 	$ ENV=devprod BUILD_NUMBER=9001 ./deploy/bamboo/make_artifact.sh

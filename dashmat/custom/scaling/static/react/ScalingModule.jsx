@@ -1,6 +1,6 @@
 import React, {Component, PropTypes} from 'react';
 import styles from '/modules/custom.scaling/Scaling.css'
-import WidgetBox from '/modules/python_dashing.core_modules.components/WidgetBox.jsx';
+import WidgetBox from '/modules/dashmat.core_modules.components/WidgetBox.jsx';
 import {Table} from 'react-bootstrap';
 
 export class InstanceCountModule extends WidgetBox {

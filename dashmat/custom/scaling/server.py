@@ -1,6 +1,6 @@
-from python_dashing.core_modules.amazon_base.server import ServerMixin
-from python_dashing.core_modules.base import ServerBase
-from python_dashing.errors import PythonDashingError
+from dashmat.core_modules.amazon_base.server import ServerMixin
+from dashmat.core_modules.base import ServerBase
+from dashmat.errors import DashMatError
 
 from input_algorithms import spec_base as sb
 from input_algorithms.meta import Meta
@@ -163,7 +163,7 @@ class Server(ServerBase, ServerMixin):
 
             res = json.loads(requests.get(url, params=params).content.decode('utf-8'))
             if 'results' not in res:
-                raise PythonDashingError("Failed to get cost from cloudability", res=res)
+                raise DashMatError("Failed to get cost from cloudability", res=res)
             costs.append(res['results'][0]['unblended_cost'])
 
         return costs
