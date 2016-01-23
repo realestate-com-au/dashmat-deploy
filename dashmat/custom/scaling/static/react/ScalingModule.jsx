@@ -3,19 +3,19 @@ import styles from '/modules/custom.scaling/Scaling.css'
 import WidgetBox from '/modules/dashmat.core_modules.components/WidgetBox.jsx';
 import {Table} from 'react-bootstrap';
 
-export class InstanceCountModule extends WidgetBox {
-  render_inner() {
+export class InstanceCountModule extends Component {
+  render() {
     return (
-      <div>
+      <WidgetBox {...this.props}>
         <div style={{padding: "5px"}}>
           <h3>{this.props.title}</h3>
-          {this.state.data.instance_counts.map((v, index) =>
+          {this.props.data.instance_counts.map((v, index) =>
             <p key={index}>
               {v[0]}: {v[1].alive} alive, {v[1].dead} dead
             </p>
           )}
         </div>
-      </div>
+      </WidgetBox>
     )
   }
 }
@@ -29,7 +29,7 @@ InstanceCountModule.propTypes = {
   title: PropTypes.string,
 };
 
-export class ScalingModule extends WidgetBox {
+export class ScalingModule extends Component {
   render_td(options, key) {
     var inner = ""
     if (options != null) {
@@ -46,19 +46,19 @@ export class ScalingModule extends WidgetBox {
     )
   }
 
-  render_inner() {
-    var data = this.state.data.applications.map((value, index) =>
-      this.state.data.by_account.reduce((nxt, v) => Object.assign(nxt, {[v[0]]: value[1][v[0]]}), {application: value[0]})
+  render() {
+    var data = this.props.data.applications.map((value, index) =>
+      this.props.data.by_account.reduce((nxt, v) => Object.assign(nxt, {[v[0]]: value[1][v[0]]}), {application: value[0]})
     )
 
-    var account_names = this.state.data.by_account.map(v => v[0]);
+    var account_names = this.props.data.by_account.map(v => v[0]);
     var headers = [
       <th key={0}>Application</th>,
       ...account_names.map((name, index) => <th key={index+1}>{name}</th>)
     ]
 
     return (
-      <div>
+      <WidgetBox {...this.props}>
         <Table>
           <thead>
             <tr>
@@ -74,7 +74,7 @@ export class ScalingModule extends WidgetBox {
             )}
           </tbody>
         </Table>
-      </div>
+      </WidgetBox>
     )
   }
 }

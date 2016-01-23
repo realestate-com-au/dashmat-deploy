@@ -32,7 +32,7 @@ if sys.version.startswith(\"3.4\"): sys.exit(1)
   fi
 fi
 
-required_version=0.2.5
+required_version=0.2.6
 
 source $TMP_DIR/bin/activate
 export PYTHONPATH=$PYTHONPATH:$DIR

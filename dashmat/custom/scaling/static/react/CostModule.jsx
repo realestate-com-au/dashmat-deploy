@@ -1,17 +1,17 @@
 import React, {Component, PropTypes} from 'react';
 import WidgetBox from '/modules/dashmat.core_modules.components/WidgetBox.jsx';
 
-export default class CostModule extends WidgetBox {
-  render_inner() {
+export default class CostModule extends Component {
+  render() {
     return (
-      <div>
+      <WidgetBox {...this.props}>
         <div style={{padding: "5px"}}>
           <h3>{this.props.title}</h3>
-          {this.state.data.cost.map((v, index) =>
+          {this.props.data.cost.map((v, index) =>
             <p key={index}>{v[0]}: {v[1]}</p>
           )}
         </div>
-      </div>
+      </WidgetBox>
     )
   }
 }

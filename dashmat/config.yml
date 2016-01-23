@@ -47,11 +47,11 @@ dashboards:
       - [[CommentsModule, ReviewsModule], "reviews"]
     layout: |
       <flexcontainer>
-        <CommentsModule datasource="/data/reviews/comments" />
+        <CommentsModule data={this.datasource("/data/reviews/comments")} />
       </flexcontainer>
       <flexcontainer>
-        <ReviewsModule width="auto" datasource="/data/reviews/total_reviews" title="Total IOS Ratings"/>
-        <ReviewsModule width="auto" datasource="/data/reviews/current_reviews" title="Current IOS Ratings"/>
+        <ReviewsModule width="auto" data={this.datasource("/data/reviews/total_reviews")} title="Total IOS Ratings"/>
+        <ReviewsModule width="auto" data={this.datasource("/data/reviews/current_reviews")} title="Current IOS Ratings"/>
       </flexcontainer>
 
   "/scaling":
@@ -60,11 +60,11 @@ dashboards:
       - [[ScalingModule, InstanceCountModule, CostModule], "scaling"]
     layout: |
       <flexcontainer>
-        <ScalingModule width="auto" datasource="/data/scaling/scaling" title="" />
+        <ScalingModule width="auto" data={this.datasource("/data/scaling/scaling")} title="" />
       </flexcontainer>
       <flexcontainer>
-        <InstanceCountModule datasource="/data/scaling/instance_count" title="Instance Count" />
-        <CostModule datasource="/data/scaling/cost_last_month" title="Last month Amazon cost" />
-        <CostModule datasource="/data/scaling/cost_this_month" title="This month Amazon cost" />
+        <InstanceCountModule data={this.datasource("/data/scaling/instance_count")} title="Instance Count" />
+        <CostModule data={this.datasource("/data/scaling/cost_last_month")} title="Last month Amazon cost" />
+        <CostModule data={this.datasource("/data/scaling/cost_this_month")} title="This month Amazon cost" />
       </flexcontainer>
 
