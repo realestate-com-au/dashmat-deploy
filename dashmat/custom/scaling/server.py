@@ -39,14 +39,8 @@ class Server(ServerBase, ServerMixin):
                 self._cloudability_auth = self._cloudability_auth()
         return self._cloudability_auth
 
-    @property
-    def routes(self):
-        yield "cost_last_month", lambda ds: self.cost(ds, this_month=False)
-        yield "cost_this_month", lambda ds: self.cost(ds, this_month=True)
-
-        yield "scaling", self.scaling
-        yield "instance_count", self.instance_counts
-
+    cost_last_month = ServerBase.Route(lambda s, ds: s.cost(ds, this_month=False))
+    cost_this_month = ServerBase.Route(lambda s, ds: s.cost(ds, this_month=True))
     def cost(self, datastore, this_month=True):
         by_account = []
 
@@ -57,7 +51,8 @@ class Server(ServerBase, ServerMixin):
 
         return {"cost": by_account}
 
-    def instance_counts(self, datastore):
+    @ServerBase.Route()
+    def instance_count(self, datastore):
         by_account = []
 
         for name in self.ordered_accounts:
@@ -66,6 +61,7 @@ class Server(ServerBase, ServerMixin):
             by_account.append((name, data))
         return {"instance_counts": by_account}
 
+    @ServerBase.Route()
     def scaling(self, datastore):
         by_account = []
         applications = {}

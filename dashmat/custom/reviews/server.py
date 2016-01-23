@@ -21,16 +21,7 @@ class Server(ServerBase):
         for key, val in kwargs.items():
             setattr(self, key, val)
 
-    @property
-    def routes(self):
-        yield "current_reviews", self.current_reviews
-        yield "total_reviews", self.total_reviews
-        yield "comments", self.comments
-
-    @property
-    def register_checks(self):
-        yield "0 */3 * * *", self.make_stats
-
+    @ServerBase.Route()
     def total_reviews(self, datastore, latest=False):
         key = "reviews-{0}-{1}".format(self.app_id, self.itunes_country_code)
         if latest:
@@ -43,9 +34,11 @@ class Server(ServerBase):
         rating_list = list(zip(("5 stars", "4 stars", "3 stars", "2 stars", "1 stars"), data['ratingCountList']))
         return {"label": label, "total_num_ratings": total_num_ratings, "total_num_reviews": total_num_reviews, "rating_list": rating_list}
 
+    @ServerBase.Route()
     def current_reviews(self, datastore):
         return self.total_reviews(datastore, latest=True)
 
+    @ServerBase.Route()
     def comments(self, datastore):
         comments = datastore.retrieve("reviews-{0}-{1}-comments".format(self.app_id, self.itunes_country_code))['userReviewList']
 
@@ -54,6 +47,7 @@ class Server(ServerBase):
 
         return {"nice_comments": nice_comments}
 
+    @ServerBase.check_every("0 */3 * * *")
     def make_stats(self, time_since_last_check):
         url = "https://itunes.apple.com/{0}/customer-reviews/id{1}".format(self.itunes_country_code, self.app_id)
         headers = {}
